@@ -1,0 +1,210 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+.app {
+  height: 100vh;
+  width: 100vw;
+  background: rgb(19, 18, 18);
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.main-content {
+  display: flex;
+  gap: 10px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.frames {
+  flex: 2;
+  background: rgb(19, 18, 18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+}
+
+.frames img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.chat-detections {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 250px;
+  max-width: 400px;
+  resize: horizontal;
+  overflow: hidden;
+  border-left: 1px solid #333;
+}
+
+.tabs {
+  display: flex;
+  gap: 10px;
+  padding: 5px;
+}
+
+.tab-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 5px;
+}
+
+.chat-bubbles {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 5px;
+}
+
+.chat-input {
+  padding-top: 10px;
+  background: rgb(19, 18, 18);
+}
+
+.chat-input input {
+  width: 100%;
+  padding: 8px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 6px;
+  background-color: #333;
+  color: white;
+}
+
+.bubble {
+  padding: 10px;
+  border-radius: 10px;
+  max-width: 70%;
+  word-wrap: break-word;
+}
+
+.user {
+  background: #08a02e;
+  color: white;
+  align-self: flex-end;
+}
+
+.llm {
+  background: #057aee;
+  color: white;
+  align-self: flex-start;
+}
+
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #777;
+  font-size: 1.2rem;
+}
+
+.modal-backdrop {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(0,0,0,0.5);
+  display: flex; justify-content: center; align-items: center;
+  z-index: 999;
+}
+
+.modal {
+  background: rgb(148, 144, 144);
+  padding: 2rem;
+  border-radius: 10px;
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+}
+
+.modal-section {
+  margin: 1rem 0;
+}
+
+.modal input[type="text"] {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 1rem;
+}
+
+.modal .button,
+.modal label.button {
+  padding: 0.5rem 1rem;
+  background: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  border-radius: 5px;
+}
+
+/* Progress bar styles */
+.progress-section {
+  margin-top: 10px;
+  text-align: center;
+  color: white;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 20px;
+  background-color: #333;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: #08a02e; /* Matches .user bubble color for consistency */
+  transition: width 0.3s ease-in-out;
+}
+
+.progress-section p {
+  margin-top: 5px;
+  font-size: 14px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .main-content {
+    flex-direction: column;
+  }
+
+  .chat-detections {
+    width: 100%;
+    max-width: none;
+    resize: none;
+  }
+}
