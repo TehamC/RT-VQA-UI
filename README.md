@@ -80,6 +80,7 @@ Here's how to use the RT-VQA UI:
 
 Begin by selecting a video file from your local machine to load into the application.
 (Consider that video fps is low due to long VQA inference times, for each frame >1s)
+In order to speed up the UI allows to skip frames either +-300 once or continuously skipping the selected number of frames on the drop down menu.
 
 ![Select Video File](ui_gif/ui1.gif)
 
