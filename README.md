@@ -1,6 +1,6 @@
 # RT-VQA-UI: Real-Time Video Question Answering User Interface
 
-This repository contains the user interface (UI) for a Real-Time Video Question Answering (RT-VQA) application. This web app allows users to interact with video content by posing questions and receiving answers in real-time.
+This repository contains the user interface (UI) for a Real-Time Video Question Answering (RT-VQA) application. This web app allows users to interact with video content by posing questions and receiving answers in real-time. It's designed as a complementary interactive inference tool for my previous VQA project: https://github.com/TehamC/VQA_Construction. By adjusting the backend, you can easily integrate other custom VQA models.
 
 ## Features
 
