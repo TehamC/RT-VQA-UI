@@ -74,17 +74,18 @@ To run the full application, you need to start both the backend and the frontend
 
 ## Usage
 
-Here's how to use the RT-VQA UI (Consider that video fps is low due to long VQA inference times, for each frame >1s):
+Here's how to use the RT-VQA UI:
 
 ### 1. Select Video File
 
 Begin by selecting a video file from your local machine to load into the application.
+(Consider that video fps is low due to long VQA inference times, for each frame >1s)
 
 ![Select Video File](ui_gif/ui1.gif)
 
 ### 2. Pause Video and Enter Prompts
 
-You can pause the video at any point to enter your questions or prompts. The system will process your input based on the current video frame. When paused, the LLM will respond with its prediction via chat. To prevent overwhelming the chat, this LLM prediction feature is disabled when the video is actively playing, as a message would appear for each new frame.
+You can pause the video at any point to enter your questions or prompts. The system will process your input based on the current video frame. When paused, the LLM will respond with its prediction via chat. To prevent overwhelming the chat, this LLM prediction feature is disabled when the video is actively playing, as a message would appear for each new frame. The LLMs selection will be highlighted in a red frame.
 
 ![Pause Video and Enter Prompts - Example 1](ui_gif/ui2.gif)
 
