@@ -74,7 +74,7 @@ To run the full application, you need to start both the backend and the frontend
 
 ## Usage
 
-Here's how to use the RT-VQA UI:
+Here's how to use the RT-VQA UI (Consider that video fps is low due to long VQA inference times, for each frame >1s):
 
 ### 1. Select Video File
 
