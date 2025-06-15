@@ -60,7 +60,7 @@ async def update_task(req: QuestionRequest):
 
 @router.get("/stream/resume")
 async def stream_resume(request: Request, video_name: str, frame_index: int, frame_skip: int = 1):
-    video_path = os.path.join(VIDEO_DIR, video_name)
+    video_path = os.path.join(VIDEO_DIR, f"{video_name}.mp4")
     if not os.path.isfile(video_path):
         return {"detail": f"Video {video_name} not found"}
 
@@ -113,7 +113,7 @@ async def stream_resume(request: Request, video_name: str, frame_index: int, fra
 
 @router.get("/frame/infer")
 async def infer_single_frame(video_name: str, frame_index: int):
-    video_path = os.path.join(VIDEO_DIR, video_name)
+    video_path = os.path.join(VIDEO_DIR, f"{video_name}.mp4")
     if not os.path.isfile(video_path):
         return {"detail": f"Video {video_name} not found"}
 
@@ -147,6 +147,24 @@ async def infer_single_frame(video_name: str, frame_index: int):
         "frame_index": frame_index,
         "llm_answer": answer,
         "task": current_llm_question
+    }
+
+@router.get("/video_metadata/{video_name}")
+async def get_video_metadata(video_name: str):
+    video_path = os.path.join(VIDEO_DIR, f"{video_name}.mp4")
+    if not os.path.isfile(video_path):
+        return {"detail": f"Video {video_name} not found"}
+
+    cap = cv2.VideoCapture(video_path)
+    duration = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
+    frame_rate = cap.get(cv2.CAP_PROP_FPS)
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    cap.release()
+
+    return {
+        "duration": duration,
+        "frame_rate": frame_rate,
+        "total_frames": total_frames
     }
 
 def draw_boxes(frame, detections: List[Dict], selected_pile_bbox, anchor_bbox):

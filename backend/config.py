@@ -7,3 +7,4 @@ VIDEO_DIR = os.path.join(CURRENT_DIR, "uploads")
 YOLO_MODEL_PATH = os.path.join(CURRENT_DIR, "trained_models", "best.pt")
 TRAINED_MODEL_PATH = os.path.join(CURRENT_DIR, "trained_models", "Q6_context")
 BASE_MODEL_NAME = "meta-llama/Llama-3.2-1B-Instruct" 
+

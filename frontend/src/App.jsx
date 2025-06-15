@@ -4,6 +4,7 @@ import VideoControls from './VideoControls';
 import VideoPlayer from './VideoPlayer';
 import ChatDetections from './ChatDetections';
 import VideoModal from './VideoModal';
+import axios from 'axios';
 
 function App() {
   const [activeTab, setActiveTab] = useState('detections');
@@ -17,6 +18,7 @@ function App() {
   const [showSelectModal, setShowSelectModal] = useState(false);
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [downloadProgress, setDownloadProgress] = useState({ progress: 0, speed: 0, eta: 0, status: 'idle' });
+  const [totalFrames, setTotalFrames] = useState(0);
 
   const imageRef = useRef(null);
   const eventSourceRef = useRef(null);
@@ -28,131 +30,192 @@ function App() {
   }, [chatMessages]);
 
   useEffect(() => {
+    if (videoName) {
+      axios.get(`http://localhost:8000/video_metadata/${encodeURIComponent(videoName)}`)
+        .then(res => {
+          const { duration, frame_rate, total_frames } = res.data;
+          setTotalFrames(total_frames || Math.floor(duration * frame_rate));
+        })
+        .catch(err => console.error('Metadata error:', err));
+    }
     return () => {
       if (eventSourceRef.current) eventSourceRef.current.close();
       if (wsRef.current) wsRef.current.close();
     };
-  }, []);
+  }, [videoName]);
 
   return (
     <div className="app">
-      <VideoControls
-        videoName={videoName}
-        isPlaying={isPlaying}
-        frameSkipRate={frameSkipRate}
-        setShowSelectModal={setShowSelectModal}
-        handlePlayPause={() => {
-          if (isPlaying) {
-            if (eventSourceRef.current) eventSourceRef.current.close();
-            setIsPlaying(false);
-          } else if (videoName) {
-            const url = `http://localhost:8000/stream/resume?video_name=${encodeURIComponent(videoName)}&frame_index=${currentFrameIndex}&frame_skip=${frameSkipRate}`;
-            const eventSource = new EventSource(url);
-            eventSourceRef.current = eventSource;
-
-            eventSource.onmessage = (event) => {
-              try {
-                const data = JSON.parse(event.data);
-                const { image_base64, detections, frame_index } = data;
-                if (imageRef.current && image_base64) {
-                  imageRef.current.src = `data:image/jpeg;base64,${image_base64}`;
-                }
-                setDetections(detections || []);
-                setCurrentFrameIndex(frame_index);
-              } catch (err) {
-                console.error("Error parsing stream data:", err);
-              }
-            };
-
-            eventSource.onerror = () => {
-              eventSource.close();
-              setIsPlaying(false);
-            };
-
-            setIsPlaying(true);
-          }
-        }}
-        handleFrameSkip={(offset) => {
-          if (!videoName) return;
-          const newIndex = Math.max(0, currentFrameIndex + offset);
-          setCurrentFrameIndex(newIndex);
-
-          if (isPlaying) {
-            if (eventSourceRef.current) eventSourceRef.current.close();
-            const url = `http://localhost:8000/stream/resume?video_name=${encodeURIComponent(videoName)}&frame_index=${newIndex}&frame_skip=${frameSkipRate}`;
-            const eventSource = new EventSource(url);
-            eventSourceRef.current = eventSource;
-
-            eventSource.onmessage = (event) => {
-              try {
-                const data = JSON.parse(event.data);
-                const { image_base64, detections, frame_index } = data;
-                if (imageRef.current && image_base64) {
-                  imageRef.current.src = `data:image/jpeg;base64,${image_base64}`;
-                }
-                setDetections(detections || []);
-                setCurrentFrameIndex(frame_index);
-              } catch (err) {
-                console.error("Error parsing stream data:", err);
-              }
-            };
-
-            eventSource.onerror = () => {
-              eventSource.close();
-              setIsPlaying(false);
-            };
-
-            setIsPlaying(true);
-          } else {
-            fetch(`http://localhost:8000/frame/infer?video_name=${encodeURIComponent(videoName)}&frame_index=${newIndex}`)
-              .then((res) => res.json())
-              .then((data) => {
-                const { image_base64, detections, frame_index } = data;
-                if (imageRef.current && image_base64) {
-                  imageRef.current.src = `data:image/jpeg;base64,${image_base64}`;
-                }
-                setDetections(detections || []);
-                setCurrentFrameIndex(frame_index);
-              })
-              .catch((err) => console.error("Error fetching frame:", err));
-          }
-        }}
-        handleFrameSkipRateChange={(e) => {
-          setFrameSkipRate(parseInt(e.target.value, 10));
-          if (videoName) {
-            const newIndex = currentFrameIndex;
-            if (isPlaying) {
-              if (eventSourceRef.current) eventSourceRef.current.close();
-              const url = `http://localhost:8000/stream/resume?video_name=${encodeURIComponent(videoName)}&frame_index=${newIndex}&frame_skip=${parseInt(e.target.value, 10)}`;
-              const eventSource = new EventSource(url);
-              eventSourceRef.current = eventSource;
-
-              eventSource.onmessage = (event) => {
-                try {
-                  const data = JSON.parse(event.data);
-                  const { image_base64, detections, frame_index } = data;
-                  if (imageRef.current && image_base64) {
-                    imageRef.current.src = `data:image/jpeg;base64,${image_base64}`;
-                  }
-                  setDetections(detections || []);
-                  setCurrentFrameIndex(frame_index);
-                } catch (err) {
-                  console.error("Error parsing stream data:", err);
-                }
-              };
-
-              eventSource.onerror = () => {
-                eventSource.close();
-                setIsPlaying(false);
-              };
-
-              setIsPlaying(true);
-            }
-          }
-        }}
-      />
+      <div className="video-header">
+        <button onClick={() => setShowSelectModal(true)}>
+          {videoName ? `Selected: ${videoName}` : 'Video'}
+        </button>
+      </div>
       <div className="main-content">
-        <VideoPlayer videoName={videoName} imageRef={imageRef} />
+        <div className="video-container">
+          <VideoPlayer videoName={videoName} imageRef={imageRef} />
+          <VideoControls
+            videoName={videoName}
+            isPlaying={isPlaying}
+            frameSkipRate={frameSkipRate}
+            currentFrameIndex={currentFrameIndex}
+            totalFrames={totalFrames}
+            setShowSelectModal={setShowSelectModal}
+            handlePlayPause={() => {
+              if (isPlaying) {
+                if (eventSourceRef.current) eventSourceRef.current.close();
+                setIsPlaying(false);
+              } else if (videoName) {
+                const url = `http://localhost:8000/stream/resume?video_name=${encodeURIComponent(videoName)}&frame_index=${currentFrameIndex}&frame_skip=${frameSkipRate}`;
+                const eventSource = new EventSource(url);
+                eventSourceRef.current = eventSource;
+
+                eventSource.onmessage = (event) => {
+                  try {
+                    const data = JSON.parse(event.data);
+                    const { image_base64, detections, frame_index } = data;
+                    if (imageRef.current && image_base64) {
+                      imageRef.current.src = `data:image/jpeg;base64,${image_base64}`;
+                    }
+                    setDetections(detections || []);
+                    setCurrentFrameIndex(frame_index);
+                  } catch (err) {
+                    console.error("Error parsing stream data:", err);
+                  }
+                };
+
+                eventSource.onerror = () => {
+                  eventSource.close();
+                  setIsPlaying(false);
+                };
+
+                setIsPlaying(true);
+              }
+            }}
+            handleFrameSkip={(offset) => {
+              if (!videoName) return;
+              const newIndex = Math.max(0, currentFrameIndex + offset);
+              setCurrentFrameIndex(newIndex);
+
+              if (isPlaying) {
+                if (eventSourceRef.current) eventSourceRef.current.close();
+                const url = `http://localhost:8000/stream/resume?video_name=${encodeURIComponent(videoName)}&frame_index=${newIndex}&frame_skip=${frameSkipRate}`;
+                const eventSource = new EventSource(url);
+                eventSourceRef.current = eventSource;
+
+                eventSource.onmessage = (event) => {
+                  try {
+                    const data = JSON.parse(event.data);
+                    const { image_base64, detections, frame_index } = data;
+                    if (imageRef.current && image_base64) {
+                      imageRef.current.src = `data:image/jpeg;base64,${image_base64}`;
+                    }
+                    setDetections(detections || []);
+                    setCurrentFrameIndex(frame_index);
+                  } catch (err) {
+                    console.error("Error parsing stream data:", err);
+                  }
+                };
+
+                eventSource.onerror = () => {
+                  eventSource.close();
+                  setIsPlaying(false);
+                };
+
+                setIsPlaying(true);
+              } else {
+                fetch(`http://localhost:8000/frame/infer?video_name=${encodeURIComponent(videoName)}&frame_index=${newIndex}`)
+                  .then((res) => res.json())
+                  .then((data) => {
+                    const { image_base64, detections, frame_index } = data;
+                    if (imageRef.current && image_base64) {
+                      imageRef.current.src = `data:image/jpeg;base64,${image_base64}`;
+                    }
+                    setDetections(detections || []);
+                    setCurrentFrameIndex(frame_index);
+                  })
+                  .catch((err) => console.error("Error fetching frame:", err));
+              }
+            }}
+            handleFrameSkipRateChange={(e) => {
+              setFrameSkipRate(parseInt(e.target.value, 10));
+              if (videoName) {
+                const newIndex = currentFrameIndex;
+                if (isPlaying) {
+                  if (eventSourceRef.current) eventSourceRef.current.close();
+                  const url = `http://localhost:8000/stream/resume?video_name=${encodeURIComponent(videoName)}&frame_index=${newIndex}&frame_skip=${parseInt(e.target.value, 10)}`;
+                  const eventSource = new EventSource(url);
+                  eventSourceRef.current = eventSource;
+
+                  eventSource.onmessage = (event) => {
+                    try {
+                      const data = JSON.parse(event.data);
+                      const { image_base64, detections, frame_index } = data;
+                      if (imageRef.current && image_base64) {
+                        imageRef.current.src = `data:image/jpeg;base64,${image_base64}`;
+                      }
+                      setDetections(detections || []);
+                      setCurrentFrameIndex(frame_index);
+                    } catch (err) {
+                      console.error("Error parsing stream data:", err);
+                    }
+                  };
+
+                  eventSource.onerror = () => {
+                    eventSource.close();
+                    setIsPlaying(false);
+                  };
+
+                  setIsPlaying(true);
+                }
+              }
+            }}
+            handleSliderChange={(e) => {
+              const newIndex = Math.floor((parseInt(e.target.value, 10) / 100) * totalFrames);
+              setCurrentFrameIndex(newIndex);
+
+              if (isPlaying) {
+                if (eventSourceRef.current) eventSourceRef.current.close();
+                const url = `http://localhost:8000/stream/resume?video_name=${encodeURIComponent(videoName)}&frame_index=${newIndex}&frame_skip=${frameSkipRate}`;
+                const eventSource = new EventSource(url);
+                eventSourceRef.current = eventSource;
+
+                eventSource.onmessage = (event) => {
+                  try {
+                    const data = JSON.parse(event.data);
+                    const { image_base64, detections, frame_index } = data;
+                    if (imageRef.current && image_base64) {
+                      imageRef.current.src = `data:image/jpeg;base64,${image_base64}`;
+                    }
+                    setDetections(detections || []);
+                    setCurrentFrameIndex(frame_index);
+                  } catch (err) {
+                    console.error("Error parsing stream data:", err);
+                  }
+                };
+
+                eventSource.onerror = () => {
+                  eventSource.close();
+                  setIsPlaying(false);
+                };
+
+                setIsPlaying(true);
+              } else {
+                fetch(`http://localhost:8000/frame/infer?video_name=${encodeURIComponent(videoName)}&frame_index=${newIndex}`)
+                  .then((res) => res.json())
+                  .then((data) => {
+                    const { image_base64, detections, frame_index } = data;
+                    if (imageRef.current && image_base64) {
+                      imageRef.current.src = `data:image/jpeg;base64,${image_base64}`;
+                    }
+                    setDetections(detections || []);
+                    setCurrentFrameIndex(frame_index);
+                  })
+                  .catch((err) => console.error("Error fetching frame:", err));
+              }
+            }}
+          />
+        </div>
         <ChatDetections
           activeTab={activeTab}
           setActiveTab={setActiveTab}
